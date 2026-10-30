@@ -1,7 +1,8 @@
 const dns = require('node:dns');
 
-// Use the DNS server that works with the current network
-dns.setServers(['172.20.10.1']);
+if (process.env.NODE_ENV !== 'production') {
+    dns.setServers(['172.20.10.1']);
+}
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -16,10 +17,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ==================================================
-// CONNECT TO MONGODB ATLAS
-// ==================================================
-
 mongoose.connect(process.env.MONGODB_URI, {
     dbName: 'library_db'
 })
@@ -29,10 +26,6 @@ mongoose.connect(process.env.MONGODB_URI, {
     .catch((err) => {
         console.log('MongoDB connection error:', err.message);
     });
-
-// ==================================================
-// LOGGER MIDDLEWARE
-// ==================================================
 
 app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
@@ -44,9 +37,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// ==================================================
-// AUTHENTICATION MIDDLEWARE
-// ==================================================
 
 function isLibrarian(req, res, next) {
     if (!req.query.role) {
@@ -64,9 +54,6 @@ function isLibrarian(req, res, next) {
     next();
 }
 
-// ==================================================
-// LOGIN ROUTE
-// ==================================================
 
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
@@ -93,11 +80,6 @@ app.post('/api/login', (req, res) => {
     });
 });
 
-// ==================================================
-// BOOK ROUTES
-// ==================================================
-
-// ROUTE 1: Get all books
 app.get('/api/books', async (req, res) => {
     try {
         const filter = {};
@@ -128,7 +110,6 @@ app.get('/api/books', async (req, res) => {
     }
 });
 
-// ROUTE 2: Get one book by ID
 app.get('/api/books/:id', async (req, res) => {
     try {
         const book = await Book.findById(req.params.id)
@@ -149,7 +130,6 @@ app.get('/api/books/:id', async (req, res) => {
     }
 });
 
-// ROUTE 3: Create a new book
 app.post('/api/books', isLibrarian, async (req, res) => {
     try {
         const {
@@ -179,7 +159,7 @@ app.post('/api/books', isLibrarian, async (req, res) => {
     }
 });
 
-// ROUTE 4: Update a book
+
 app.put('/api/books/:id', isLibrarian, async (req, res) => {
     try {
         if (Object.keys(req.body).length === 0) {
@@ -212,11 +192,7 @@ app.put('/api/books/:id', isLibrarian, async (req, res) => {
     }
 });
 
-// ==================================================
-// BORROW / RETURN ROUTES
-// ==================================================
 
-// ROUTE 5: Borrow a book
 app.put('/api/books/:id/borrow', isLibrarian, async (req, res) => {
     try {
         console.log("Borrow request ID:", req.params.id);
@@ -253,7 +229,6 @@ app.put('/api/books/:id/borrow', isLibrarian, async (req, res) => {
     }
 });
 
-// ROUTE 6: Return a book
 app.put('/api/books/:id/return', isLibrarian, async (req, res) => {
     try {
         console.log("Return request ID:", req.params.id);
@@ -290,7 +265,6 @@ app.put('/api/books/:id/return', isLibrarian, async (req, res) => {
     }
 });
 
-// ROUTE 7: Delete a book
 app.delete('/api/books/:id', isLibrarian, async (req, res) => {
     try {
         const deletedBook = await Book.findByIdAndDelete(
@@ -311,10 +285,6 @@ app.delete('/api/books/:id', isLibrarian, async (req, res) => {
         });
     }
 });
-
-// ==================================================
-// AUTHOR ROUTES
-// ==================================================
 
 app.get('/api/authors', async (req, res) => {
     try {
@@ -415,20 +385,12 @@ app.delete('/api/authors/:id', isLibrarian, async (req, res) => {
     }
 });
 
-// ==================================================
-// 404 HANDLER
-// ==================================================
-
 app.use((req, res) => {
     res.status(404).json({
         error: 'Route not found',
         message: `Cannot ${req.method} ${req.url}`
     });
 });
-
-// ==================================================
-// START SERVER
-// ==================================================
 
 const PORT = process.env.PORT || 3000;
 
