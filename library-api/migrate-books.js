@@ -1,6 +1,5 @@
 const dns = require('node:dns');
 
-// Use the DNS server that works with the current network
 dns.setServers(['172.20.10.1']);
 
 require('dotenv').config();
